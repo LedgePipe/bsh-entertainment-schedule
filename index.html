@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bradshaw Social House — Entertainment Schedule</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242837;
+    --border: #2e3347;
+    --text: #e8eaf0;
+    --text-muted: #8b90a5;
+    --accent: #6c63ff;
+    --accent-hover: #7c74ff;
+    --band: #e84393;
+    --dj: #6c5ce7;
+    --trivia: #00b894;
+    --bingo: #fdcb6e;
+    --event: #0984e3;
+    --danger: #d63031;
+    --success: #00b894;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Auth Screen */
+  .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+  .auth-card { background: var(--surface); border-radius: var(--radius); padding: 40px; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
+  .auth-card h1 { font-size: 1.5rem; margin-bottom: 4px; text-align: center; }
+  .auth-card .subtitle { color: var(--text-muted); text-align: center; margin-bottom: 28px; font-size: 0.9rem; }
+  .auth-card .logo { text-align: center; font-size: 2rem; margin-bottom: 16px; }
+
+  /* Forms */
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 0.95rem; outline: none; transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 20px; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
+    border: none; cursor: pointer; transition: all 0.2s; text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { opacity: 0.85; }
+  .btn-sm { padding: 8px 14px; font-size: 0.8rem; }
+  .btn-icon { padding: 8px; background: none; border: none; color: var(--text-muted); cursor: pointer; border-radius: var(--radius-sm); }
+  .btn-icon:hover { color: var(--text); background: var(--surface2); }
+
+  .auth-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 12px; text-align: center; }
+  .auth-toggle { text-align: center; margin-top: 16px; color: var(--text-muted); font-size: 0.85rem; }
+  .auth-toggle a { color: var(--accent); cursor: pointer; text-decoration: none; }
+
+  /* Layout */
+  .app { display: none; }
+  .app.active { display: flex; flex-direction: column; min-height: 100vh; }
+  .header {
+    display: flex; align-items: center; justify-content: space-between; padding: 16px 24px;
+    background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-left h1 { font-size: 1.15rem; white-space: nowrap; }
+  .header-left .tagline { color: var(--text-muted); font-size: 0.8rem; display: none; }
+  @media(min-width:768px) { .header-left .tagline { display: inline; } }
+  .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .user-info { color: var(--text-muted); font-size: 0.8rem; }
+  .user-role { background: var(--accent); color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between; padding: 16px 24px;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .view-toggle { display: flex; background: var(--surface); border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
+  .view-toggle button { padding: 8px 16px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+  .view-toggle button.active { background: var(--accent); color: #fff; }
+
+  .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; cursor: pointer;
+    border: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .chip.band { background: rgba(232,67,147,0.15); color: var(--band); border-color: var(--band); }
+  .chip.dj { background: rgba(108,92,231,0.15); color: var(--dj); border-color: var(--dj); }
+  .chip.trivia { background: rgba(0,184,148,0.15); color: var(--trivia); border-color: var(--trivia); }
+  .chip.bingo { background: rgba(253,203,110,0.15); color: var(--bingo); border-color: var(--bingo); }
+  .chip.event { background: rgba(9,132,227,0.15); color: var(--event); border-color: var(--event); }
+  .chip.inactive { opacity: 0.35; }
+
+  /* Main */
+  .main { flex: 1; padding: 0 24px 24px; }
+
+  /* Calendar View */
+  .calendar-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
+  .calendar-nav h2 { font-size: 1.2rem; min-width: 200px; text-align: center; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; }
+  .cal-header { background: var(--surface2); padding: 10px; text-align: center; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+  .cal-day {
+    background: var(--surface); padding: 8px; min-height: 100px; position: relative; cursor: pointer; transition: background 0.2s;
+  }
+  .cal-day:hover { background: var(--surface2); }
+  .cal-day.other-month { opacity: 0.3; }
+  .cal-day.today { box-shadow: inset 0 0 0 2px var(--accent); }
+  .cal-day-num { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+  .cal-event {
+    font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; margin-bottom: 3px; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;
+  }
+  .cal-event.band { background: rgba(232,67,147,0.2); color: var(--band); border-left: 3px solid var(--band); }
+  .cal-event.dj { background: rgba(108,92,231,0.2); color: var(--dj); border-left: 3px solid var(--dj); }
+  .cal-event.trivia { background: rgba(0,184,148,0.2); color: var(--trivia); border-left: 3px solid var(--trivia); }
+  .cal-event.bingo { background: rgba(253,203,110,0.2); color: var(--bingo); border-left: 3px solid var(--bingo); }
+  .cal-event.event { background: rgba(9,132,227,0.2); color: var(--event); border-left: 3px solid var(--event); }
+  .cal-more { font-size: 0.7rem; color: var(--accent); cursor: pointer; }
+
+  /* List View */
+  .list-view { display: flex; flex-direction: column; gap: 8px; }
+  .list-date-group h3 { font-size: 0.85rem; color: var(--text-muted); padding: 12px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .list-item {
+    display: flex; align-items: center; gap: 16px; padding: 14px 18px; background: var(--surface);
+    border-radius: var(--radius-sm); cursor: pointer; transition: background 0.2s; border: 1px solid var(--border);
+  }
+  .list-item:hover { background: var(--surface2); border-color: var(--accent); }
+  .list-item-color { width: 4px; height: 40px; border-radius: 4px; flex-shrink: 0; }
+  .list-item-color.band { background: var(--band); }
+  .list-item-color.dj { background: var(--dj); }
+  .list-item-color.trivia { background: var(--trivia); }
+  .list-item-color.bingo { background: var(--bingo); }
+  .list-item-color.event { background: var(--event); }
+  .list-item-info { flex: 1; min-width: 0; }
+  .list-item-title { font-weight: 600; font-size: 0.95rem; }
+  .list-item-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+  .list-item-cat { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 20px; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+    opacity: 0; visibility: hidden; transition: all 0.3s;
+  }
+  .modal-overlay.active { opacity: 1; visibility: visible; }
+  .modal {
+    background: var(--surface); border-radius: var(--radius); width: 100%; max-width: 520px;
+    max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between; padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-header h2 { font-size: 1.1rem; }
+  .modal-body { padding: 24px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; padding: 16px 24px; border-top: 1px solid var(--border); }
+
+  /* Detail View */
+  .detail-section { margin-bottom: 20px; }
+  .detail-section h4 { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: var(--text-muted); font-size: 0.9rem; }
+  .detail-value { font-size: 0.9rem; font-weight: 500; }
+  .detail-value a { color: var(--accent); text-decoration: none; }
+
+  .category-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .category-badge.band { background: rgba(232,67,147,0.15); color: var(--band); }
+  .category-badge.dj { background: rgba(108,92,231,0.15); color: var(--dj); }
+  .category-badge.trivia { background: rgba(0,184,148,0.15); color: var(--trivia); }
+  .category-badge.bingo { background: rgba(253,203,110,0.15); color: var(--bingo); }
+  .category-badge.event { background: rgba(9,132,227,0.15); color: var(--event); }
+
+  .audit-info { font-size: 0.8rem; color: var(--text-muted); padding: 12px; background: var(--surface2); border-radius: var(--radius-sm); }
+
+  /* Activity Log */
+  .activity-list { max-height: 400px; overflow-y: auto; }
+  .activity-item { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-action { font-weight: 600; }
+  .activity-action.added { color: var(--success); }
+  .activity-action.removed { color: var(--danger); }
+  .activity-action.modified { color: var(--accent); }
+  .activity-time { color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; }
+
+  /* Team */
+  .team-list { display: flex; flex-direction: column; gap: 8px; }
+  .team-item {
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
+    background: var(--surface2); border-radius: var(--radius-sm);
+  }
+  .team-item-info { display: flex; align-items: center; gap: 12px; }
+  .team-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex;
+    align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;
+  }
+
+  /* Nav tabs */
+  .nav-tabs {
+    display: flex; gap: 4px; background: var(--surface); padding: 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .nav-tab {
+    padding: 8px 16px; background: none; border: none; color: var(--text-muted); cursor: pointer;
+    border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; transition: all 0.2s;
+  }
+  .nav-tab.active { background: var(--accent); color: #fff; }
+  .nav-tab:hover:not(.active) { color: var(--text); }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 16px; }
+  .empty-state h3 { color: var(--text); margin-bottom: 8px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; background: var(--success);
+    color: #fff; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 500;
+    z-index: 2000; transform: translateY(100px); opacity: 0; transition: all 0.3s;
+  }
+  .toast.active { transform: translateY(0); opacity: 1; }
+  .toast.error { background: var(--danger); }
+
+  /* Mobile */
+  @media(max-width:768px) {
+    .header { padding: 12px 16px; }
+    .toolbar { padding: 12px 16px; }
+    .main { padding: 0 16px 16px; }
+    .cal-day { min-height: 70px; padding: 4px; }
+    .cal-day-num { font-size: 0.7rem; }
+    .cal-event { font-size: 0.6rem; padding: 2px 4px; }
+    .modal { max-width: 100%; margin: 0; border-radius: var(--radius) var(--radius) 0 0; }
+    .header-right .btn span.label { display: none; }
+  }
+
+  /* Add to Calendar Popup */
+  .cal-popup-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: flex-end; justify-content: center; z-index: 1100;
+    opacity: 0; visibility: hidden; transition: all 0.3s;
+  }
+  .cal-popup-overlay.active { opacity: 1; visibility: visible; }
+  .cal-popup {
+    background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 420px;
+    padding: 24px; padding-bottom: max(24px, env(safe-area-inset-bottom));
+    transform: translateY(100%); transition: transform 0.3s ease;
+  }
+  .cal-popup-overlay.active .cal-popup { transform: translateY(0); }
+  .cal-popup h3 { font-size: 1rem; margin-bottom: 4px; text-align: center; }
+  .cal-popup .cal-popup-sub { font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-bottom: 16px; }
+  .cal-popup-btn {
+    display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); font-size: 0.95rem; font-weight: 500; cursor: pointer;
+    text-decoration: none; margin-bottom: 8px; transition: all 0.2s;
+  }
+  .cal-popup-btn:hover { border-color: var(--accent); background: var(--bg); }
+  .cal-popup-btn .cal-icon { font-size: 1.4rem; width: 32px; text-align: center; }
+  .cal-popup-btn .cal-label { flex: 1; text-align: left; }
+  .cal-popup-cancel {
+    display: block; width: 100%; padding: 12px; margin-top: 8px; background: none;
+    border: none; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; text-align: center;
+  }
+  @media(min-width:500px) {
+    .cal-popup { border-radius: var(--radius); margin-bottom: 20px; }
+    .cal-popup-overlay { align-items: center; }
+  }
+
+  .hidden { display: none !important; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<script>
+// Global error handler — shows JS errors on screen for debugging
+window.onerror = function(msg, url, line, col, error) {
+  var el = document.getElementById('authError');
+  if (el) { el.textContent = 'JS Error: ' + msg + ' (line ' + line + ')'; el.classList.remove('hidden'); }
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  var el = document.getElementById('authError');
+  if (el) { el.textContent = 'Error: ' + (e.reason && e.reason.message || e.reason || 'Unknown async error'); el.classList.remove('hidden'); }
+});
+</script>
+
+<!-- Auth Screen -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="logo">🎤</div>
+    <h1>Bradshaw Social House</h1>
+    <p class="subtitle">Entertainment Schedule</p>
+    <div id="authError" class="auth-error hidden"></div>
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleAuth()">
+      </div>
+      <button class="btn btn-primary" onclick="handleAuth()">Sign In</button>
+      <p class="auth-toggle">Don't have an account? <a href="javascript:void(0)" onclick="toggleAuthMode()">Sign up</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" class="app">
+  <div class="header">
+    <div class="header-left">
+      <h1>🎤 Bradshaw Social House</h1>
+      <span class="tagline">Entertainment Schedule</span>
+    </div>
+    <div class="header-right">
+      <span class="user-info" id="userEmail"></span>
+      <span class="user-role" id="userRole"></span>
+      <button class="btn btn-secondary btn-sm" onclick="showModal('activityModal')">📋 <span class="label">Activity</span></button>
+      <button class="btn btn-secondary btn-sm" onclick="showModal('teamModal')">👥 <span class="label">Team</span></button>
+      <button class="btn btn-secondary btn-sm" onclick="handleSignOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-page="schedule" onclick="switchPage('schedule')">Schedule</button>
+        <button class="nav-tab" data-page="performers" onclick="switchPage('performers')">Performers</button>
+      </div>
+    </div>
+    <div class="toolbar-right" id="scheduleToolbar">
+      <div class="filter-chips">
+        <div class="chip band" data-cat="band" onclick="toggleFilter('band')">Band</div>
+        <div class="chip dj" data-cat="dj" onclick="toggleFilter('dj')">DJ</div>
+        <div class="chip trivia" data-cat="trivia" onclick="toggleFilter('trivia')">Trivia</div>
+        <div class="chip bingo" data-cat="bingo" onclick="toggleFilter('bingo')">Bingo</div>
+        <div class="chip event" data-cat="event" onclick="toggleFilter('event')">Event</div>
+      </div>
+      <div class="view-toggle">
+        <button class="active" onclick="setView('calendar')">Calendar</button>
+        <button onclick="setView('list')">List</button>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="exportICal()">📅 Export</button>
+      <button class="btn btn-primary btn-sm" id="addEventBtn" onclick="showAddEvent()">+ Add Event</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="schedulePage">
+      <div id="calendarView">
+        <div class="calendar-nav">
+          <button class="btn-icon" onclick="navMonth(-1)">◀</button>
+          <h2 id="calendarTitle"></h2>
+          <button class="btn-icon" onclick="navMonth(1)">▶</button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
+      <div id="listView" class="list-view hidden"></div>
+    </div>
+
+    <div id="performersPage" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2 style="font-size:1.1rem">Performers & Contacts</h2>
+        <button class="btn btn-primary btn-sm" id="addPerfBtn" onclick="showAddPerformer()">+ Add Performer</button>
+      </div>
+      <div id="performersList" class="list-view"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Event Detail Modal -->
+<div class="modal-overlay" id="eventDetailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="detailTitle">Event Details</h2>
+      <button class="btn-icon" onclick="closeModal('eventDetailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer" id="detailFooter"></div>
+  </div>
+</div>
+
+<!-- Add/Edit Event Modal -->
+<div class="modal-overlay" id="eventFormModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="eventFormTitle">Add Event</h2>
+      <button class="btn-icon" onclick="closeModal('eventFormModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editEventId">
+      <div class="form-group">
+        <label>Event Title</label>
+        <input type="text" id="eventTitle" placeholder="e.g. Trivia Night with Dave">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="eventCategory">
+          <option value="band">🎸 Band</option>
+          <option value="dj">🎧 DJ</option>
+          <option value="trivia">🧠 Trivia</option>
+          <option value="bingo">🎯 Bingo</option>
+          <option value="event">🎉 Event</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="eventDate">
+        </div>
+        <div class="form-group">
+          <label>Time</label>
+          <input type="time" id="eventTime" value="19:00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Performer / Host (optional)</label>
+        <select id="eventPerformer">
+          <option value="">— None —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Repeat</label>
+        <select id="eventRecurrence" onchange="document.getElementById('recurrenceEndGroup').style.display=this.value==='none'?'none':''">
+          <option value="none">Does not repeat</option>
+          <option value="weekly">Every week</option>
+          <option value="biweekly">Every 2 weeks</option>
+          <option value="monthly">Every month</option>
+        </select>
+      </div>
+      <div class="form-group" id="recurrenceEndGroup" style="display:none">
+        <label>Repeat Until</label>
+        <input type="date" id="eventRecurrenceEnd">
+      </div>
+      <div class="form-group">
+        <label>Notes (optional)</label>
+        <textarea id="eventNotes" placeholder="Any additional details..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('eventFormModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Performer Modal -->
+<div class="modal-overlay" id="performerFormModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="performerFormTitle">Add Performer</h2>
+      <button class="btn-icon" onclick="closeModal('performerFormModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editPerformerId">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="perfName" placeholder="e.g. DJ Spinmaster">
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="perfType">
+          <option value="band">🎸 Band</option>
+          <option value="dj">🎧 DJ</option>
+          <option value="trivia">🧠 Trivia Host</option>
+          <option value="bingo">🎯 Bingo Host</option>
+          <option value="event">🎉 Event Host</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="perfEmail" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" id="perfPhone" placeholder="(555) 123-4567">
+      </div>
+      <div class="form-group">
+        <label>Price / Rate</label>
+        <input type="text" id="perfPrice" placeholder="e.g. $200/night">
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="perfNotes" placeholder="Genre, availability, etc."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('performerFormModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePerformer()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activity Log Modal -->
+<div class="modal-overlay" id="activityModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Activity Log</h2>
+      <button class="btn-icon" onclick="closeModal('activityModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="activity-list" id="activityList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Team Modal -->
+<div class="modal-overlay" id="teamModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Team Members</h2>
+      <button class="btn-icon" onclick="closeModal('teamModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="inviteSection">
+        <h4 style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px">INVITE NEW MEMBER</h4>
+        <div style="display:flex;gap:8px;margin-bottom:20px">
+          <input type="email" id="inviteEmail" placeholder="email@example.com" style="flex:1;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:0.9rem">
+          <select id="inviteRole" style="padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:0.9rem">
+            <option value="manager">Manager</option>
+            <option value="scheduler">Scheduler</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="inviteUser()">Invite</button>
+        </div>
+      </div>
+      <div class="team-list" id="teamList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Performer Detail Modal -->
+<div class="modal-overlay" id="performerDetailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="perfDetailTitle">Performer Details</h2>
+      <button class="btn-icon" onclick="closeModal('performerDetailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="perfDetailBody"></div>
+    <div class="modal-footer" id="perfDetailFooter"></div>
+  </div>
+</div>
+
+<!-- Add to Calendar Popup -->
+<div class="cal-popup-overlay" id="calPopup" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="cal-popup">
+    <h3 id="calPopupTitle">Add to Calendar</h3>
+    <p class="cal-popup-sub" id="calPopupSub"></p>
+    <a class="cal-popup-btn" id="calBtnGoogle" href="#" target="_blank" rel="noopener" onclick="setTimeout(closeCalPopup,300)">
+      <span class="cal-icon">📅</span>
+      <span class="cal-label">Google Calendar</span>
+    </a>
+    <a class="cal-popup-btn" id="calBtnApple" href="#" rel="noopener" onclick="setTimeout(closeCalPopup,300)">
+      <span class="cal-icon">🍎</span>
+      <span class="cal-label">Apple Calendar</span>
+    </a>
+    <a class="cal-popup-btn" id="calBtnOutlook" href="#" target="_blank" rel="noopener" onclick="setTimeout(closeCalPopup,300)">
+      <span class="cal-icon">📧</span>
+      <span class="cal-label">Outlook</span>
+    </a>
+    <button class="cal-popup-cancel" onclick="document.getElementById('calPopup').classList.remove('active')">Cancel</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="document.getElementById('authError').textContent='Failed to load Supabase library. Check your internet connection and reload.';document.getElementById('authError').classList.remove('hidden');"></script>
+
+<script>
+// ============================================================
+// SUPABASE CONFIG
+// ============================================================
+const SUPABASE_URL = 'https://kneyvzmibgzfflstrizl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuZXl2em1pYmd6ZmZsc3RyaXpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDMyMDQsImV4cCI6MjA4NjY3OTIwNH0.PE482K2jkIIdg73h0BwYf3_Vdjl78GmKOQ5U5QZjs7E';
+
+var sb;
+try {
+  if (!window.supabase || !window.supabase.createClient) {
+    throw new Error('Supabase library failed to load. Please check your internet connection and reload the page.');
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch(initErr) {
+  document.addEventListener('DOMContentLoaded', function() {
+    const errEl = document.getElementById('authError');
+    if (errEl) { errEl.textContent = initErr.message; errEl.classList.remove('hidden'); }
+  });
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let currentUser = null;
+let currentProfile = null;
+let events = [];
+let performers = [];
+let activityLog = [];
+let teamMembers = [];
+let currentView = 'calendar';
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+let activeFilters = new Set(['band','dj','trivia','bingo','event']);
+let isSignUp = false;
+let currentPage = 'schedule';
+
+// ============================================================
+// AUTH
+// ============================================================
+function toggleAuthMode() {
+  isSignUp = !isSignUp;
+  document.querySelector('.auth-toggle').innerHTML = isSignUp
+    ? 'Already have an account? <a onclick="toggleAuthMode()">Sign in</a>'
+    : 'Don\'t have an account? <a onclick="toggleAuthMode()">Sign up</a>';
+  document.querySelector('#loginForm .btn-primary').textContent = isSignUp ? 'Create Account' : 'Sign In';
+  hideAuthError();
+}
+
+function showAuthError(msg) { const el = document.getElementById('authError'); el.textContent = msg; el.classList.remove('hidden'); }
+function hideAuthError() { document.getElementById('authError').classList.add('hidden'); }
+
+async function handleAuth() {
+  if (!sb) return showAuthError('Supabase library not loaded. Check your internet connection and reload.');
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if (!email || !password) return showAuthError('Please enter email and password.');
+  if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
+  hideAuthError();
+  const btn = document.querySelector('#loginForm .btn-primary');
+  const origText = btn.textContent;
+  btn.textContent = 'Please wait...';
+  btn.disabled = true;
+  try {
+    let result;
+    if (isSignUp) {
+      result = await sb.auth.signUp({ email, password });
+      if (result.error) throw result.error;
+      if (result.data.user && !result.data.session) {
+        showAuthError('Check your email for a confirmation link, then sign in.');
+        return;
+      }
+    } else {
+      result = await sb.auth.signInWithPassword({ email, password });
+      if (result.error) {
+        if (result.error.message === 'Invalid login credentials') {
+          throw new Error('Invalid email or password. If you don\'t have an account yet, click "Sign up" below.');
+        }
+        throw result.error;
+      }
+    }
+  } catch(e) {
+    showAuthError(e.message || 'Authentication failed.');
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
+async function handleSignOut() {
+  await sb.auth.signOut();
+}
+
+// Listen for auth state changes
+if (sb) sb.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) {
+    currentUser = session.user;
+    await loadProfile();
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    document.getElementById('userEmail').textContent = currentUser.email;
+    document.getElementById('userRole').textContent = currentProfile?.role || 'viewer';
+    applyPermissions();
+    await loadAllData();
+  } else {
+    currentUser = null;
+    currentProfile = null;
+    document.getElementById('authScreen').style.display = '';
+    document.getElementById('app').classList.remove('active');
+  }
+});
+
+async function loadProfile() {
+  const { data, error } = await sb
+    .from('profiles')
+    .select('*')
+    .eq('id', currentUser.id)
+    .single();
+
+  if (error || !data) {
+    // Check for invite
+    const { data: invite } = await sb
+      .from('invites')
+      .select('*')
+      .eq('email', currentUser.email)
+      .single();
+
+    const role = invite ? invite.role : 'admin'; // First user = admin
+    const invitedBy = invite ? invite.invited_by : null;
+
+    await sb.from('profiles').upsert({
+      id: currentUser.id,
+      email: currentUser.email,
+      role,
+      invited_by: invitedBy,
+      created_at: new Date().toISOString()
+    });
+
+    // Clean up invite
+    if (invite) {
+      await sb.from('invites').delete().eq('email', currentUser.email);
+    }
+
+    currentProfile = { id: currentUser.id, email: currentUser.email, role, invited_by: invitedBy };
+  } else {
+    currentProfile = data;
+  }
+}
+
+function applyPermissions() {
+  const canEdit = ['admin','manager','scheduler'].includes(currentProfile?.role);
+  document.getElementById('addEventBtn').style.display = canEdit ? '' : 'none';
+  const addPerfBtn = document.getElementById('addPerfBtn');
+  if (addPerfBtn) addPerfBtn.style.display = canEdit ? '' : 'none';
+  document.getElementById('inviteSection').style.display = currentProfile?.role === 'admin' ? '' : 'none';
+}
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+async function loadAllData() {
+  await Promise.all([loadEvents(), loadPerformers(), loadActivity(), loadTeam()]);
+  renderCurrentView();
+  renderPerformers();
+}
+
+async function loadEvents() {
+  const { data } = await sb.from('events').select('*').order('date', { ascending: true });
+  events = data || [];
+}
+
+async function loadPerformers() {
+  const { data } = await sb.from('performers').select('*').order('name', { ascending: true });
+  performers = data || [];
+  populatePerformerDropdown();
+}
+
+async function loadActivity() {
+  const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(50);
+  activityLog = data || [];
+  renderActivityLog();
+}
+
+async function loadTeam() {
+  const { data } = await sb.from('profiles').select('*').neq('role', 'disabled');
+  teamMembers = data || [];
+  renderTeam();
+}
+
+// ============================================================
+// REALTIME SUBSCRIPTIONS
+// ============================================================
+function setupRealtime() {
+  sb.channel('events-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, async () => { await loadEvents(); renderCurrentView(); })
+    .subscribe();
+  sb.channel('performers-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'performers' }, async () => { await loadPerformers(); renderPerformers(); })
+    .subscribe();
+  sb.channel('activity-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_log' }, async () => { await loadActivity(); })
+    .subscribe();
+  sb.channel('profiles-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async () => { await loadTeam(); })
+    .subscribe();
+}
+setupRealtime();
+
+// ============================================================
+// VIEWS & RENDERING
+// ============================================================
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.view-toggle button:${view === 'calendar' ? 'first' : 'last'}-child`).classList.add('active');
+  document.getElementById('calendarView').classList.toggle('hidden', view !== 'calendar');
+  document.getElementById('listView').classList.toggle('hidden', view !== 'list');
+  renderCurrentView();
+}
+
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  document.getElementById('schedulePage').classList.toggle('hidden', page !== 'schedule');
+  document.getElementById('performersPage').classList.toggle('hidden', page !== 'performers');
+  document.getElementById('scheduleToolbar').classList.toggle('hidden', page !== 'schedule');
+}
+
+function toggleFilter(cat) {
+  if (activeFilters.has(cat)) activeFilters.delete(cat); else activeFilters.add(cat);
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('inactive', !activeFilters.has(c.dataset.cat)));
+  renderCurrentView();
+}
+
+function expandRecurringEvents(evts) {
+  const expanded = [];
+  evts.forEach(ev => {
+    expanded.push(ev);
+    if (ev.recurrence_type && ev.recurrence_type !== 'none' && ev.recurrence_end) {
+      const start = new Date(ev.date + 'T12:00:00');
+      const end = new Date(ev.recurrence_end + 'T12:00:00');
+      let cursor = new Date(start);
+      const step = ev.recurrence_type === 'weekly' ? 7 : ev.recurrence_type === 'biweekly' ? 14 : 0;
+      while (true) {
+        if (step > 0) {
+          cursor.setDate(cursor.getDate() + step);
+        } else {
+          // monthly
+          cursor.setMonth(cursor.getMonth() + 1);
+        }
+        if (cursor > end) break;
+        const yyyy = cursor.getFullYear();
+        const mm = String(cursor.getMonth() + 1).padStart(2, '0');
+        const dd = String(cursor.getDate()).padStart(2, '0');
+        expanded.push({
+          ...ev,
+          date: `${yyyy}-${mm}-${dd}`,
+          _isRecurrence: true,
+          _parentId: ev.id
+        });
+      }
+    }
+  });
+  return expanded;
+}
+
+function getFilteredEvents() {
+  return expandRecurringEvents(events).filter(e => activeFilters.has(e.category));
+}
+
+function renderCurrentView() {
+  if (currentView === 'calendar') renderCalendar();
+  else renderList();
+}
+
+function navMonth(dir) {
+  currentMonth += dir;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calendarTitle').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+  const grid = document.getElementById('calendarGrid');
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const prevDays = new Date(currentYear, currentMonth, 0).getDate();
+  const today = new Date();
+  const filtered = getFilteredEvents();
+
+  let html = dayNames.map(d => `<div class="cal-header">${d}</div>`).join('');
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
+  for (let i = 0; i < totalCells; i++) {
+    let day, isOther = false, dateStr;
+    if (i < firstDay) {
+      day = prevDays - firstDay + i + 1; isOther = true;
+      const pm = currentMonth === 0 ? 11 : currentMonth - 1;
+      const py = currentMonth === 0 ? currentYear - 1 : currentYear;
+      dateStr = `${py}-${String(pm+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    } else if (i >= firstDay + daysInMonth) {
+      day = i - firstDay - daysInMonth + 1; isOther = true;
+      const nm = currentMonth === 11 ? 0 : currentMonth + 1;
+      const ny = currentMonth === 11 ? currentYear + 1 : currentYear;
+      dateStr = `${ny}-${String(nm+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    } else {
+      day = i - firstDay + 1;
+      dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    }
+
+    const isToday = !isOther && day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+    const dayEvents = filtered.filter(e => e.date === dateStr);
+
+    html += `<div class="cal-day${isOther ? ' other-month' : ''}${isToday ? ' today' : ''}" onclick="showDayEvents('${dateStr}')">`;
+    html += `<div class="cal-day-num">${day}</div>`;
+    dayEvents.slice(0, 3).forEach(ev => {
+      const realId = ev._parentId || ev.id;
+      html += `<div class="cal-event ${ev.category}" onclick="event.stopPropagation();showEventDetail('${realId}','${ev.date}')">${esc(ev.title)}</div>`;
+    });
+    if (dayEvents.length > 3) html += `<div class="cal-more">+${dayEvents.length - 3} more</div>`;
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function renderList() {
+  const container = document.getElementById('listView');
+  const filtered = getFilteredEvents().filter(e => e.date >= new Date().toISOString().slice(0,10));
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><h3>No upcoming events</h3><p>Add some events to get started!</p></div>';
+    return;
+  }
+  const grouped = {};
+  filtered.forEach(e => { if (!grouped[e.date]) grouped[e.date] = []; grouped[e.date].push(e); });
+
+  let html = '';
+  Object.keys(grouped).sort().forEach(date => {
+    const d = new Date(date + 'T12:00:00');
+    html += `<div class="list-date-group"><h3>${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</h3>`;
+    grouped[date].forEach(ev => {
+      const perf = ev.performer_id ? performers.find(p => p.id === ev.performer_id) : null;
+      const realId = ev._parentId || ev.id;
+      const recBadge = ev._isRecurrence ? ' <span style="font-size:0.7rem;opacity:0.6">🔁</span>' : (ev.recurrence_type && ev.recurrence_type !== 'none' ? ' <span style="font-size:0.7rem;opacity:0.6">🔁</span>' : '');
+      html += `<div class="list-item" onclick="showEventDetail('${realId}','${ev.date}')">
+        <div class="list-item-color ${ev.category}"></div>
+        <div class="list-item-info">
+          <div class="list-item-title">${esc(ev.title)}${recBadge}</div>
+          <div class="list-item-meta">${ev.time ? formatTime(ev.time) : ''}${perf ? ' · ' + esc(perf.name) : ''}</div>
+        </div>
+        <button class="btn-icon" title="Add to Calendar" onclick="event.stopPropagation();addToCalendar('${realId}','${ev.date}')" style="font-size:1.2rem">📅</button>
+        <span class="list-item-cat category-badge ${ev.category}">${ev.category}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function renderPerformers() {
+  const container = document.getElementById('performersList');
+  if (!performers.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🎤</div><h3>No performers yet</h3><p>Add performers to manage contacts and pricing.</p></div>';
+    return;
+  }
+  container.innerHTML = performers.map(p => `
+    <div class="list-item" onclick="showPerformerDetail('${p.id}')">
+      <div class="list-item-color ${p.type}"></div>
+      <div class="list-item-info">
+        <div class="list-item-title">${esc(p.name)}</div>
+        <div class="list-item-meta">${esc(p.email || '')}${p.price ? ' · ' + esc(p.price) : ''}</div>
+      </div>
+      <span class="list-item-cat category-badge ${p.type}">${p.type}</span>
+    </div>
+  `).join('');
+}
+
+function populatePerformerDropdown() {
+  const sel = document.getElementById('eventPerformer');
+  sel.innerHTML = '<option value="">— None —</option>' +
+    performers.map(p => `<option value="${p.id}">${esc(p.name)} (${p.type})</option>`).join('');
+}
+
+function renderActivityLog() {
+  const container = document.getElementById('activityList');
+  if (!activityLog.length) {
+    container.innerHTML = '<div class="empty-state"><p>No activity yet.</p></div>';
+    return;
+  }
+  container.innerHTML = activityLog.map(a => {
+    const time = a.created_at ? new Date(a.created_at).toLocaleString() : '';
+    return `<div class="activity-item">
+      <span class="activity-action ${a.action}">${a.action.toUpperCase()}</span>
+      <strong>${esc(a.item_name || '')}</strong>
+      by ${esc(a.performed_by || '')}
+      ${a.details ? '<br><small style="color:var(--text-muted)">' + esc(a.details) + '</small>' : ''}
+      <div class="activity-time">${time}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTeam() {
+  const container = document.getElementById('teamList');
+  container.innerHTML = teamMembers.map(m => {
+    const initials = (m.email || '?').slice(0,2).toUpperCase();
+    const isMe = currentUser && m.id === currentUser.id;
+    const canRemove = currentProfile?.role === 'admin' && !isMe;
+    return `<div class="team-item">
+      <div class="team-item-info">
+        <div class="team-avatar">${initials}</div>
+        <div>
+          <div style="font-weight:600;font-size:0.9rem">${esc(m.email)}${isMe ? ' (you)' : ''}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted)">${m.role}</div>
+        </div>
+      </div>
+      ${canRemove ? `<button class="btn btn-danger btn-sm" onclick="removeTeamMember('${m.id}')">Remove</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// EVENT DETAIL
+// ============================================================
+function showEventDetail(id, dateOverride) {
+  const baseEv = events.find(e => e.id === id);
+  if (!baseEv) return;
+  const ev = dateOverride ? { ...baseEv, date: dateOverride } : baseEv;
+  const perf = ev.performer_id ? performers.find(p => p.id === ev.performer_id) : null;
+  document.getElementById('detailTitle').textContent = ev.title;
+
+  const d = new Date(ev.date + 'T12:00:00');
+  const recLabel = ev.recurrence_type === 'weekly' ? 'Every week' : ev.recurrence_type === 'biweekly' ? 'Every 2 weeks' : ev.recurrence_type === 'monthly' ? 'Every month' : null;
+  let html = `
+    <div class="detail-section"><span class="category-badge ${ev.category}">${ev.category}</span></div>
+    <div class="detail-section">
+      <h4>Schedule</h4>
+      <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</span></div>
+      ${ev.time ? `<div class="detail-row"><span class="detail-label">Time</span><span class="detail-value">${formatTime(ev.time)}</span></div>` : ''}
+      ${recLabel ? `<div class="detail-row"><span class="detail-label">Repeats</span><span class="detail-value">${recLabel} until ${new Date(ev.recurrence_end+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span></div>` : ''}
+    </div>`;
+
+  if (perf) {
+    html += `<div class="detail-section"><h4>Performer / Host</h4>
+      <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value" style="cursor:pointer;color:var(--accent)" onclick="closeModal('eventDetailModal');showPerformerDetail('${perf.id}')">${esc(perf.name)} →</span></div>
+      ${perf.phone ? `<div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value"><a href="tel:${perf.phone}">${esc(perf.phone)}</a></span></div>` : ''}
+      ${perf.email ? `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value"><a href="mailto:${perf.email}">${esc(perf.email)}</a></span></div>` : ''}
+      ${perf.price ? `<div class="detail-row"><span class="detail-label">Price</span><span class="detail-value">${esc(perf.price)}</span></div>` : ''}
+    </div>`;
+  }
+
+  if (ev.notes) html += `<div class="detail-section"><h4>Notes</h4><p style="font-size:0.9rem;line-height:1.5">${esc(ev.notes)}</p></div>`;
+
+  html += `<div class="audit-info">
+    Added by <strong>${esc(ev.added_by || 'Unknown')}</strong>${ev.added_at ? ' on ' + new Date(ev.added_at).toLocaleDateString() : ''}
+    ${ev.modified_by ? '<br>Last modified by <strong>' + esc(ev.modified_by) + '</strong>' : ''}
+  </div>`;
+
+  document.getElementById('detailBody').innerHTML = html;
+
+  const realId = ev._parentId || ev.id;
+  const canEdit = ['admin','manager','scheduler'].includes(currentProfile?.role);
+  document.getElementById('detailFooter').innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="addToCalendar('${realId}','${ev.date}')">📅 Add to Calendar</button>
+    ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="closeModal('eventDetailModal');editEvent('${realId}')">Edit</button>
+    <button class="btn btn-danger btn-sm" onclick="deleteEvent('${realId}')">Delete</button>` : ''}
+  `;
+
+  showModal('eventDetailModal');
+}
+
+function showPerformerDetail(id) {
+  const p = performers.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('perfDetailTitle').textContent = p.name;
+
+  const perfEvents = events.filter(e => e.performer_id === id);
+  const upcoming = perfEvents.filter(e => e.date >= new Date().toISOString().slice(0,10)).slice(0, 5);
+
+  let html = `
+    <div class="detail-section"><span class="category-badge ${p.type}">${p.type}</span></div>
+    <div class="detail-section"><h4>Contact Information</h4>
+      ${p.email ? `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value"><a href="mailto:${p.email}">${esc(p.email)}</a></span></div>` : ''}
+      ${p.phone ? `<div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value"><a href="tel:${p.phone}">${esc(p.phone)}</a></span></div>` : ''}
+      ${p.price ? `<div class="detail-row"><span class="detail-label">Price / Rate</span><span class="detail-value">${esc(p.price)}</span></div>` : ''}
+    </div>`;
+
+  if (p.notes) html += `<div class="detail-section"><h4>Notes</h4><p style="font-size:0.9rem;line-height:1.5">${esc(p.notes)}</p></div>`;
+
+  if (upcoming.length) {
+    html += `<div class="detail-section"><h4>Upcoming Events (${upcoming.length})</h4>`;
+    upcoming.forEach(ev => {
+      const d = new Date(ev.date + 'T12:00:00');
+      html += `<div class="detail-row"><span class="detail-label">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span><span class="detail-value">${esc(ev.title)}</span></div>`;
+    });
+    html += '</div>';
+  }
+
+  if (p.added_by) html += `<div class="audit-info">Added by <strong>${esc(p.added_by)}</strong></div>`;
+
+  document.getElementById('perfDetailBody').innerHTML = html;
+
+  const canEdit = ['admin','manager','scheduler'].includes(currentProfile?.role);
+  document.getElementById('perfDetailFooter').innerHTML = canEdit ? `
+    <button class="btn btn-secondary" onclick="closeModal('performerDetailModal');editPerformer('${id}')">Edit</button>
+    <button class="btn btn-danger" onclick="deletePerformer('${id}')">Delete</button>
+  ` : '';
+
+  showModal('performerDetailModal');
+}
+
+// ============================================================
+// EVENT CRUD
+// ============================================================
+function showAddEvent(date) {
+  document.getElementById('editEventId').value = '';
+  document.getElementById('eventFormTitle').textContent = 'Add Event';
+  document.getElementById('eventTitle').value = '';
+  document.getElementById('eventCategory').value = 'band';
+  document.getElementById('eventDate').value = date || new Date().toISOString().slice(0,10);
+  document.getElementById('eventTime').value = '19:00';
+  document.getElementById('eventPerformer').value = '';
+  document.getElementById('eventRecurrence').value = 'none';
+  document.getElementById('eventRecurrenceEnd').value = '';
+  document.getElementById('recurrenceEndGroup').style.display = 'none';
+  document.getElementById('eventNotes').value = '';
+  showModal('eventFormModal');
+}
+
+function showDayEvents(date) { showAddEvent(date); }
+
+function editEvent(id) {
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  document.getElementById('editEventId').value = id;
+  document.getElementById('eventFormTitle').textContent = 'Edit Event';
+  document.getElementById('eventTitle').value = ev.title;
+  document.getElementById('eventCategory').value = ev.category;
+  document.getElementById('eventDate').value = ev.date;
+  document.getElementById('eventTime').value = ev.time || '19:00';
+  document.getElementById('eventPerformer').value = ev.performer_id || '';
+  document.getElementById('eventRecurrence').value = ev.recurrence_type || 'none';
+  document.getElementById('eventRecurrenceEnd').value = ev.recurrence_end || '';
+  document.getElementById('recurrenceEndGroup').style.display = (ev.recurrence_type && ev.recurrence_type !== 'none') ? '' : 'none';
+  document.getElementById('eventNotes').value = ev.notes || '';
+  showModal('eventFormModal');
+}
+
+async function saveEvent() {
+  const id = document.getElementById('editEventId').value;
+  const recType = document.getElementById('eventRecurrence').value;
+  const data = {
+    title: document.getElementById('eventTitle').value.trim(),
+    category: document.getElementById('eventCategory').value,
+    date: document.getElementById('eventDate').value,
+    time: document.getElementById('eventTime').value,
+    performer_id: document.getElementById('eventPerformer').value || null,
+    notes: document.getElementById('eventNotes').value.trim(),
+    recurrence_type: recType !== 'none' ? recType : null,
+    recurrence_end: recType !== 'none' ? (document.getElementById('eventRecurrenceEnd').value || null) : null,
+  };
+  if (!data.title || !data.date) return toast('Please fill in title and date.', true);
+  if (data.recurrence_type && !data.recurrence_end) return toast('Please set a repeat end date.', true);
+
+  try {
+    if (id) {
+      data.modified_by = currentUser.email;
+      data.modified_at = new Date().toISOString();
+      const { error } = await sb.from('events').update(data).eq('id', id);
+      if (error) throw error;
+      await logActivity('modified', data.title, `Category: ${data.category}`);
+    } else {
+      data.added_by = currentUser.email;
+      data.added_at = new Date().toISOString();
+      const { error } = await sb.from('events').insert(data);
+      if (error) throw error;
+      await logActivity('added', data.title, `Category: ${data.category}`);
+    }
+    closeModal('eventFormModal');
+    await loadEvents();
+    renderCurrentView();
+    toast(id ? 'Event updated!' : 'Event added!');
+  } catch(e) { toast('Error: ' + e.message, true); }
+}
+
+async function deleteEvent(id) {
+  const ev = events.find(e => e.id === id);
+  if (!ev || !confirm('Delete "' + ev.title + '"?')) return;
+  try {
+    const { error } = await sb.from('events').delete().eq('id', id);
+    if (error) throw error;
+    await logActivity('removed', ev.title, `Deleted by ${currentUser.email}`);
+    closeModal('eventDetailModal');
+    await loadEvents();
+    renderCurrentView();
+    toast('Event deleted.');
+  } catch(e) { toast('Error: ' + e.message, true); }
+}
+
+// ============================================================
+// PERFORMER CRUD
+// ============================================================
+function showAddPerformer() {
+  document.getElementById('editPerformerId').value = '';
+  document.getElementById('performerFormTitle').textContent = 'Add Performer';
+  document.getElementById('perfName').value = '';
+  document.getElementById('perfType').value = 'band';
+  document.getElementById('perfEmail').value = '';
+  document.getElementById('perfPhone').value = '';
+  document.getElementById('perfPrice').value = '';
+  document.getElementById('perfNotes').value = '';
+  showModal('performerFormModal');
+}
+
+function editPerformer(id) {
+  const p = performers.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('editPerformerId').value = id;
+  document.getElementById('performerFormTitle').textContent = 'Edit Performer';
+  document.getElementById('perfName').value = p.name;
+  document.getElementById('perfType').value = p.type;
+  document.getElementById('perfEmail').value = p.email || '';
+  document.getElementById('perfPhone').value = p.phone || '';
+  document.getElementById('perfPrice').value = p.price || '';
+  document.getElementById('perfNotes').value = p.notes || '';
+  showModal('performerFormModal');
+}
+
+async function savePerformer() {
+  const id = document.getElementById('editPerformerId').value;
+  const data = {
+    name: document.getElementById('perfName').value.trim(),
+    type: document.getElementById('perfType').value,
+    email: document.getElementById('perfEmail').value.trim(),
+    phone: document.getElementById('perfPhone').value.trim(),
+    price: document.getElementById('perfPrice').value.trim(),
+    notes: document.getElementById('perfNotes').value.trim(),
+  };
+  if (!data.name) return toast('Please enter a name.', true);
+
+  try {
+    if (id) {
+      data.modified_by = currentUser.email;
+      const { error } = await sb.from('performers').update(data).eq('id', id);
+      if (error) throw error;
+      await logActivity('modified', data.name, 'Performer updated');
+    } else {
+      data.added_by = currentUser.email;
+      const { error } = await sb.from('performers').insert(data);
+      if (error) throw error;
+      await logActivity('added', data.name, 'New performer added');
+    }
+    closeModal('performerFormModal');
+    await loadPerformers();
+    renderPerformers();
+    toast(id ? 'Performer updated!' : 'Performer added!');
+  } catch(e) { toast('Error: ' + e.message, true); }
+}
+
+async function deletePerformer(id) {
+  const p = performers.find(x => x.id === id);
+  if (!p || !confirm('Delete "' + p.name + '"?')) return;
+  try {
+    const { error } = await sb.from('performers').delete().eq('id', id);
+    if (error) throw error;
+    await logActivity('removed', p.name, `Performer deleted by ${currentUser.email}`);
+    closeModal('performerDetailModal');
+    await loadPerformers();
+    renderPerformers();
+    toast('Performer deleted.');
+  } catch(e) { toast('Error: ' + e.message, true); }
+}
+
+// ============================================================
+// TEAM / INVITES
+// ============================================================
+async function inviteUser() {
+  const email = document.getElementById('inviteEmail').value.trim();
+  const role = document.getElementById('inviteRole').value;
+  if (!email) return toast('Please enter an email.', true);
+
+  const existing = teamMembers.find(m => m.email === email);
+  if (existing) {
+    await sb.from('profiles').update({ role }).eq('id', existing.id);
+    toast(`Updated ${email} to ${role}.`);
+  } else {
+    await sb.from('invites').upsert({ email, role, invited_by: currentUser.email, created_at: new Date().toISOString() });
+    toast(`Invite saved for ${email}. They can now sign up with that email.`);
+    await logActivity('added', email, `Invited as ${role} by ${currentUser.email}`);
+  }
+  document.getElementById('inviteEmail').value = '';
+  await loadTeam();
+}
+
+async function removeTeamMember(uid) {
+  const m = teamMembers.find(x => x.id === uid);
+  if (!m || !confirm('Remove ' + m.email + '?')) return;
+  await sb.from('profiles').update({ role: 'disabled' }).eq('id', uid);
+  await logActivity('removed', m.email, `Removed by ${currentUser.email}`);
+  await loadTeam();
+  toast('Member removed.');
+}
+
+// ============================================================
+// ACTIVITY LOG
+// ============================================================
+async function logActivity(action, itemName, details) {
+  await sb.from('activity_log').insert({
+    action,
+    item_name: itemName,
+    performed_by: currentUser.email,
+    details: details || '',
+    created_at: new Date().toISOString()
+  });
+}
+
+// ============================================================
+// ADD TO CALENDAR
+// ============================================================
+function addToCalendar(id, dateOverride) {
+  const baseEv = events.find(e => e.id === id);
+  if (!baseEv) return;
+  const ev = dateOverride ? { ...baseEv, date: dateOverride } : baseEv;
+  const perf = ev.performer_id ? performers.find(p => p.id === ev.performer_id) : null;
+  const desc = [ev.category.toUpperCase(), perf ? 'Performer: ' + perf.name : '', ev.notes || ''].filter(Boolean).join('\n');
+  const time = ev.time || '19:00';
+  const [h, m] = time.split(':').map(Number);
+  const endH = (h + 2) % 24;
+
+  // Format dates for URLs
+  const dateClean = ev.date.replace(/-/g, '');
+  const startISO = `${dateClean}T${String(h).padStart(2,'0')}${String(m).padStart(2,'0')}00`;
+  const endISO = `${dateClean}T${String(endH).padStart(2,'0')}${String(m).padStart(2,'0')}00`;
+
+  // Google Calendar URL
+  const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE`
+    + `&text=${encodeURIComponent(ev.title)}`
+    + `&dates=${startISO}/${endISO}`
+    + `&details=${encodeURIComponent(desc)}`
+    + `&location=${encodeURIComponent('Bradshaw Social House')}`;
+
+  // Outlook URL
+  const outlookStart = `${ev.date}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`;
+  const outlookEnd = `${ev.date}T${String(endH).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`;
+  const outlookUrl = `https://outlook.live.com/calendar/0/action/compose?subject=${encodeURIComponent(ev.title)}`
+    + `&startdt=${outlookStart}&enddt=${outlookEnd}`
+    + `&body=${encodeURIComponent(desc)}`
+    + `&location=${encodeURIComponent('Bradshaw Social House')}`;
+
+  // Apple Calendar (.ics data URI — opens Calendar app on iOS/Mac)
+  const ical = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Bradshaw Social House//Schedule//EN\r\nBEGIN:VEVENT\r\nDTSTART:${startISO}\r\nDTEND:${endISO}\r\nSUMMARY:${ev.title.replace(/[,;]/g,'')}\r\nDESCRIPTION:${desc.replace(/\n/g,'\\n').replace(/[,;]/g,'')}\r\nLOCATION:Bradshaw Social House\r\nEND:VEVENT\r\nEND:VCALENDAR`;
+  const icsBlob = new Blob([ical], { type: 'text/calendar' });
+  const icsUrl = URL.createObjectURL(icsBlob);
+
+  // Populate popup
+  const d = new Date(ev.date + 'T12:00:00');
+  document.getElementById('calPopupTitle').textContent = ev.title;
+  document.getElementById('calPopupSub').textContent = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) + ' at ' + formatTime(time);
+  document.getElementById('calBtnGoogle').href = gcalUrl;
+  document.getElementById('calBtnApple').href = icsUrl;
+  document.getElementById('calBtnOutlook').href = outlookUrl;
+
+  // Show popup
+  document.getElementById('calPopup').classList.add('active');
+}
+
+function closeCalPopup() {
+  document.getElementById('calPopup').classList.remove('active');
+}
+
+// Bulk export still uses .ics download
+function exportICal() {
+  const filtered = getFilteredEvents();
+  if (!filtered.length) return toast('No events to export.', true);
+  let ical = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Bradshaw Social House//Schedule//EN\r\nCALSCALE:GREGORIAN\r\n';
+  filtered.forEach(ev => {
+    const dateClean = ev.date.replace(/-/g, '');
+    const timeClean = ev.time ? ev.time.replace(':', '') + '00' : '190000';
+    const endTime = String((parseInt(timeClean.slice(0,2)) + 2) % 24).padStart(2,'0') + timeClean.slice(2);
+    const perf = ev.performer_id ? performers.find(p => p.id === ev.performer_id) : null;
+    const desc = [ev.category.toUpperCase(), perf ? 'Performer: ' + perf.name : '', ev.notes || ''].filter(Boolean).join('\\n');
+    ical += `BEGIN:VEVENT\r\nDTSTART:${dateClean}T${timeClean}\r\nDTEND:${dateClean}T${endTime}\r\nSUMMARY:${ev.title}\r\nDESCRIPTION:${desc}\r\nLOCATION:Bradshaw Social House\r\nUID:${ev.id || Date.now()}@bradshaw\r\nEND:VEVENT\r\n`;
+  });
+  ical += 'END:VCALENDAR\r\n';
+  const blob = new Blob([ical], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'bradshaw-schedule.ics'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Calendar exported!');
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function showModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+function formatTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast active' + (isError ? ' error' : '');
+  setTimeout(() => el.classList.remove('active'), 3000);
+}
+
+// Close modals on backdrop click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('active'); });
+});
+</script>
+</body>
+</html>
