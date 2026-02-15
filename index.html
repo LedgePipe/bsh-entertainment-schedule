@@ -929,7 +929,7 @@ function renderList() {
     const d = new Date(date + 'T12:00:00');
     html += `<div class="list-date-group"><h3>${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</h3>`;
     grouped[date].forEach(ev => {
-      const perf = ev.performer_id ? performers.find(p => p.id === ev.performer_id) : null;
+      const perf = ev.performer_id ? performers.find(p => p.id == ev.performer_id) : null;
       const realId = ev._parentId || ev.id;
       const recBadge = ev._isRecurrence ? ' <span style="font-size:0.7rem;opacity:0.6">🔁</span>' : (ev.recurrence_type && ev.recurrence_type !== 'none' ? ' <span style="font-size:0.7rem;opacity:0.6">🔁</span>' : '');
       html += `<div class="list-item" onclick="showEventDetail('${realId}','${ev.date}')">
@@ -1012,10 +1012,10 @@ function renderTeam() {
 // EVENT DETAIL
 // ============================================================
 function showEventDetail(id, dateOverride) {
-  const baseEv = events.find(e => e.id === id);
+  const baseEv = events.find(e => e.id == id);
   if (!baseEv) return;
   const ev = dateOverride ? { ...baseEv, date: dateOverride } : baseEv;
-  const perf = ev.performer_id ? performers.find(p => p.id === ev.performer_id) : null;
+  const perf = ev.performer_id ? performers.find(p => p.id == ev.performer_id) : null;
   document.getElementById('detailTitle').textContent = ev.title;
 
   const d = new Date(ev.date + 'T12:00:00');
@@ -1059,11 +1059,11 @@ function showEventDetail(id, dateOverride) {
 }
 
 function showPerformerDetail(id) {
-  const p = performers.find(x => x.id === id);
+  const p = performers.find(x => x.id == id);
   if (!p) return;
   document.getElementById('perfDetailTitle').textContent = p.name;
 
-  const perfEvents = events.filter(e => e.performer_id === id);
+  const perfEvents = events.filter(e => e.performer_id == id);
   const upcoming = perfEvents.filter(e => e.date >= new Date().toISOString().slice(0,10)).slice(0, 5);
 
   let html = `
@@ -1119,7 +1119,7 @@ function showAddEvent(date) {
 function showDayEvents(date) { showAddEvent(date); }
 
 function editEvent(id) {
-  const ev = events.find(e => e.id === id);
+  const ev = events.find(e => e.id == id);
   if (!ev) return;
   document.getElementById('editEventId').value = id;
   document.getElementById('eventFormTitle').textContent = 'Edit Event';
@@ -1173,7 +1173,7 @@ async function saveEvent() {
 }
 
 async function deleteEvent(id) {
-  const ev = events.find(e => e.id === id);
+  const ev = events.find(e => e.id == id);
   if (!ev || !confirm('Delete "' + ev.title + '"?')) return;
   try {
     const { error } = await sb.from('events').delete().eq('id', id);
@@ -1202,7 +1202,7 @@ function showAddPerformer() {
 }
 
 function editPerformer(id) {
-  const p = performers.find(x => x.id === id);
+  const p = performers.find(x => x.id == id);
   if (!p) return;
   document.getElementById('editPerformerId').value = id;
   document.getElementById('performerFormTitle').textContent = 'Edit Performer';
@@ -1247,7 +1247,7 @@ async function savePerformer() {
 }
 
 async function deletePerformer(id) {
-  const p = performers.find(x => x.id === id);
+  const p = performers.find(x => x.id == id);
   if (!p || !confirm('Delete "' + p.name + '"?')) return;
   try {
     const { error } = await sb.from('performers').delete().eq('id', id);
@@ -1282,7 +1282,7 @@ async function inviteUser() {
 }
 
 async function removeTeamMember(uid) {
-  const m = teamMembers.find(x => x.id === uid);
+  const m = teamMembers.find(x => x.id == uid);
   if (!m || !confirm('Remove ' + m.email + '?')) return;
   await sb.from('profiles').update({ role: 'disabled' }).eq('id', uid);
   await logActivity('removed', m.email, `Removed by ${currentUser.email}`);
@@ -1307,10 +1307,10 @@ async function logActivity(action, itemName, details) {
 // ADD TO CALENDAR
 // ============================================================
 function addToCalendar(id, dateOverride) {
-  const baseEv = events.find(e => e.id === id);
+  const baseEv = events.find(e => e.id == id);
   if (!baseEv) return;
   const ev = dateOverride ? { ...baseEv, date: dateOverride } : baseEv;
-  const perf = ev.performer_id ? performers.find(p => p.id === ev.performer_id) : null;
+  const perf = ev.performer_id ? performers.find(p => p.id == ev.performer_id) : null;
   const desc = [ev.category.toUpperCase(), perf ? 'Performer: ' + perf.name : '', ev.notes || ''].filter(Boolean).join('\n');
   const time = ev.time || '19:00';
   const [h, m] = time.split(':').map(Number);
@@ -1366,7 +1366,7 @@ function exportICal() {
     const dateClean = ev.date.replace(/-/g, '');
     const timeClean = ev.time ? ev.time.replace(':', '') + '00' : '190000';
     const endTime = String((parseInt(timeClean.slice(0,2)) + 2) % 24).padStart(2,'0') + timeClean.slice(2);
-    const perf = ev.performer_id ? performers.find(p => p.id === ev.performer_id) : null;
+    const perf = ev.performer_id ? performers.find(p => p.id == ev.performer_id) : null;
     const desc = [ev.category.toUpperCase(), perf ? 'Performer: ' + perf.name : '', ev.notes || ''].filter(Boolean).join('\\n');
     ical += `BEGIN:VEVENT\r\nDTSTART:${dateClean}T${timeClean}\r\nDTEND:${dateClean}T${endTime}\r\nSUMMARY:${ev.title}\r\nDESCRIPTION:${desc}\r\nLOCATION:Bradshaw Social House\r\nUID:${ev.id || Date.now()}@bradshaw\r\nEND:VEVENT\r\n`;
   });
