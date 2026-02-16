@@ -235,7 +235,7 @@
   .toast.active { transform: translateY(0); opacity: 1; }
   .toast.error { background: var(--danger); }
 
-  /* Mobile */
+  /* Mobile — Tablet */
   @media(max-width:768px) {
     .header { padding: 12px 16px; }
     .toolbar { padding: 12px 16px; }
@@ -245,6 +245,67 @@
     .cal-event { font-size: 0.6rem; padding: 2px 4px; }
     .modal { max-width: 100%; margin: 0; border-radius: var(--radius) var(--radius) 0 0; }
     .header-right .btn span.label { display: none; }
+  }
+
+  /* Mobile — Phones */
+  @media(max-width:600px) {
+    /* Toolbar: stack vertically */
+    .toolbar { flex-direction: column; gap: 10px; }
+    .toolbar-left, .toolbar-right { width: 100%; }
+    .toolbar-right { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .filter-chips { width: 100%; justify-content: center; }
+    .chip { padding: 5px 10px; font-size: 0.7rem; }
+    .view-toggle { flex: 0 0 auto; }
+    .view-toggle button { padding: 8px 12px; }
+    #addEventBtn { flex: 1 1 auto; }
+
+    /* Calendar: dot indicators instead of text */
+    .cal-header { padding: 6px 2px; font-size: 0.65rem; letter-spacing: 0; }
+    .cal-day { min-height: 54px; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; }
+    .cal-day-num { font-size: 0.7rem; margin-bottom: 4px; }
+    .cal-event {
+      font-size: 0; padding: 0; margin: 0; border-left: none; border-radius: 50%;
+      width: 7px; height: 7px; display: inline-block; vertical-align: middle;
+      white-space: normal; overflow: visible; text-overflow: clip;
+    }
+    .cal-event.band { background: var(--band); }
+    .cal-event.dj { background: var(--dj); }
+    .cal-event.trivia { background: var(--trivia); }
+    .cal-event.bingo { background: var(--bingo); }
+    .cal-event.event { background: var(--event); }
+    .cal-more { font-size: 0.55rem; margin-top: 2px; }
+
+    /* Touch targets */
+    .btn-sm { min-height: 40px; padding: 10px 14px; }
+    .btn-icon { padding: 10px; }
+    .nav-tab { padding: 10px 14px; }
+
+    /* List view */
+    .list-item { gap: 10px; padding: 12px 14px; }
+    .list-item-cat { display: none; }
+    .list-item-title { font-size: 0.9rem; }
+    .list-item-meta { font-size: 0.75rem; }
+
+    /* Header */
+    .header-left h1 { font-size: 1rem; }
+    .header-right { gap: 6px; }
+    .user-role { font-size: 0.6rem; }
+
+    /* Calendar nav */
+    .calendar-nav h2 { font-size: 1rem; min-width: 160px; }
+  }
+
+  /* Mobile — Extra small (iPhone SE, etc) */
+  @media(max-width:380px) {
+    .header { padding: 10px 12px; }
+    .toolbar { padding: 10px 12px; }
+    .main { padding: 0 12px 12px; }
+    .header-left h1 { font-size: 0.9rem; }
+    .user-info { display: none; }
+    .cal-day { min-height: 48px; }
+    .cal-event { width: 6px; height: 6px; }
+    .chip { padding: 4px 8px; font-size: 0.65rem; }
+    .calendar-nav h2 { font-size: 0.9rem; min-width: 140px; }
   }
 
   /* Add to Calendar Popup */
@@ -793,6 +854,13 @@ function setupRealtime() {
 }
 setupRealtime();
 
+// Re-render calendar on resize (handles orientation change, mobile↔desktop day labels)
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (currentUser) renderCurrentView(); }, 200);
+});
+
 // ============================================================
 // VIEWS & RENDERING
 // ============================================================
@@ -871,7 +939,8 @@ function renderCalendar() {
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   document.getElementById('calendarTitle').textContent = `${monthNames[currentMonth]} ${currentYear}`;
   const grid = document.getElementById('calendarGrid');
-  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const isMobile = window.innerWidth <= 600;
+  const dayNames = isMobile ? ['S','M','T','W','T','F','S'] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
