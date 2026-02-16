@@ -660,6 +660,21 @@ try {
     throw new Error('Supabase library failed to load. Please check your internet connection and reload the page.');
   }
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Proactively validate stored session on load — clear stale tokens that cause hangs
+  (async () => {
+    try {
+      const sessionCheck = Promise.race([
+        sb.auth.getSession(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Session check timeout')), 5000))
+      ]);
+      await sessionCheck;
+    } catch(e) {
+      console.warn('Stale auth token detected, clearing:', e.message);
+      localStorage.removeItem('sb-kneyvzmibgzfflstrizl-auth-token');
+      try { await sb.auth.signOut(); } catch(_) {}
+    }
+  })();
 } catch(initErr) {
   document.addEventListener('DOMContentLoaded', function() {
     const errEl = document.getElementById('authError');
@@ -719,7 +734,10 @@ async function handleAuth() {
         return;
       }
     } else {
-      result = await sb.auth.signInWithPassword({ email, password });
+      result = await Promise.race([
+        sb.auth.signInWithPassword({ email, password }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 8000))
+      ]);
       if (result.error) {
         if (result.error.message === 'Invalid login credentials') {
           throw new Error('Invalid email or password. If you don\'t have an account yet, click "Sign up" below.');
@@ -728,7 +746,14 @@ async function handleAuth() {
       }
     }
   } catch(e) {
-    showAuthError(e.message || 'Authentication failed.');
+    if (e.message === 'TIMEOUT' || e.name === 'AbortError' || (e.message && e.message.includes('abort'))) {
+      console.warn('Auth hung — clearing stale token and retrying');
+      localStorage.removeItem('sb-kneyvzmibgzfflstrizl-auth-token');
+      try { await sb.auth.signOut(); } catch(_) {}
+      showAuthError('Session expired. Please try signing in again.');
+    } else {
+      showAuthError(e.message || 'Authentication failed.');
+    }
   } finally {
     btn.textContent = origText;
     btn.disabled = false;
